@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { LogoutButton } from "@/components/logout-button";
+import { MovieSearch } from "@/components/movie-search";
 
 const items = [
   { title: "Interstellar", type: "Фильм" },
@@ -30,11 +31,7 @@ export default async function Home() {
           <LogoutButton />
         </div>
 
-        <input
-          type="text"
-          placeholder="Поиск..."
-          className="w-full max-w-md rounded-full border border-black/[.08] bg-white px-5 py-3 text-black outline-none dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50"
-        />
+        <MovieSearch />
 
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-center">
           {items.map((item) => (
