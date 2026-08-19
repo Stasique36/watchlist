@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import type { SearchResult } from "@/lib/tmdb";
@@ -20,6 +21,7 @@ function resultKey(result: SearchResult) {
 }
 
 export function MovieSearch() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,7 @@ export function MovieSearch() {
 
       if (response.status === 201) {
         setAddStatuses((prev) => ({ ...prev, [key]: { state: "added" } }));
+        router.refresh();
         return;
       }
 

@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
@@ -8,8 +7,7 @@ import { watchlistItem } from "@/db/schema/watchlist";
 import { auth } from "@/lib/auth";
 import { LogoutButton } from "@/components/logout-button";
 import { MovieSearch } from "@/components/movie-search";
-
-const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w200";
+import { WatchlistCard } from "@/components/watchlist-card";
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -46,43 +44,7 @@ export default async function Home() {
         ) : (
           <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-center">
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex w-full flex-col gap-3 rounded-2xl border border-black/[.08] bg-white p-5 dark:border-white/[.145] dark:bg-zinc-900 sm:w-64"
-              >
-                {item.posterPath ? (
-                  <Image
-                    src={`${POSTER_BASE_URL}${item.posterPath}`}
-                    alt={item.title}
-                    width={200}
-                    height={300}
-                    className="h-72 w-full rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="flex h-72 w-full items-center justify-center rounded-lg bg-zinc-100 text-center text-xs text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
-                    Нет постера
-                  </div>
-                )}
-
-                <div>
-                  <h2 className="text-lg font-medium text-black dark:text-zinc-50">
-                    {item.title}
-                  </h2>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {item.mediaType === "movie" ? "Фильм" : "Сериал"}
-                    {item.watched ? " · Просмотрено" : ""}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <button className="flex-1 rounded-full border border-black/[.08] px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:text-zinc-50 dark:hover:bg-[#1a1a1a]">
-                    Просмотрено
-                  </button>
-                  <button className="flex-1 rounded-full border border-black/[.08] px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:text-zinc-50 dark:hover:bg-[#1a1a1a]">
-                    Удалить
-                  </button>
-                </div>
-              </div>
+              <WatchlistCard key={item.id} item={item} />
             ))}
           </div>
         )}
