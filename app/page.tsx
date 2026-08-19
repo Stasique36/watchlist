@@ -1,10 +1,22 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+import { auth } from "@/lib/auth";
+import { LogoutButton } from "@/components/logout-button";
+
 const items = [
   { title: "Interstellar", type: "Фильм" },
   { title: "The Bear", type: "Сериал" },
   { title: "Dune", type: "Фильм" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex w-full max-w-3xl flex-col items-center gap-8 py-16 px-6">
@@ -15,6 +27,7 @@ export default function Home() {
           <p className="text-lg text-zinc-600 dark:text-zinc-400">
             Фильмы и сериалы, которые я хочу посмотреть
           </p>
+          <LogoutButton />
         </div>
 
         <input
