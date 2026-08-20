@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -9,6 +9,8 @@ import { auth } from "@/lib/auth";
 import { LogoutButton } from "@/components/logout-button";
 import { MovieSearch } from "@/components/movie-search";
 import { WatchlistCard } from "@/components/watchlist-card";
+
+const PAGE_SIZE = 10;
 
 export default async function Home({
   searchParams,
@@ -21,7 +23,15 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status, sort, type } = await searchParams;
+  const { status, sort, type, page } = await searchParams;
+
+  const requestedPage =
+    typeof page === "string" &&
+    /^\d+$/.test(page) &&
+    Number.isSafeInteger(Number(page)) &&
+    Number(page) >= 1
+      ? Number(page)
+      : 1;
 
   const conditions = [eq(watchlistItem.userId, session.user.id)];
 
@@ -37,13 +47,24 @@ export default async function Home({
     conditions.push(eq(watchlistItem.mediaType, "tv"));
   }
 
+  const [{ value: totalItems }] = await db
+    .select({ value: count() })
+    .from(watchlistItem)
+    .where(and(...conditions));
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+  const currentPage = Math.min(requestedPage, totalPages);
+
   const sortOrder = sort === "oldest" ? asc : desc;
 
   const items = await db
     .select()
     .from(watchlistItem)
     .where(and(...conditions))
-    .orderBy(sortOrder(watchlistItem.createdAt));
+    .orderBy(sortOrder(watchlistItem.createdAt), asc(watchlistItem.id))
+    .limit(PAGE_SIZE)
+    .offset((currentPage - 1) * PAGE_SIZE);
 
   const activeFilter =
     status === "unwatched" || status === "watched" ? status : "all";
@@ -56,6 +77,7 @@ export default async function Home({
     targetStatus: "all" | "unwatched" | "watched",
     targetSort: "newest" | "oldest",
     targetType: "all" | "movie" | "tv",
+    targetPage: number,
   ) => {
     const params = new URLSearchParams();
 
@@ -69,6 +91,10 @@ export default async function Home({
 
     if (targetType !== "all") {
       params.set("type", targetType);
+    }
+
+    if (targetPage > 1) {
+      params.set("page", String(targetPage));
     }
 
     const query = params.toString();
@@ -133,7 +159,7 @@ export default async function Home({
             return (
               <Link
                 key={filter.key}
-                href={buildHref(filter.key, activeSort, activeType)}
+                href={buildHref(filter.key, activeSort, activeType, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -154,7 +180,7 @@ export default async function Home({
             return (
               <Link
                 key={typeOption.key}
-                href={buildHref(activeFilter, activeSort, typeOption.key)}
+                href={buildHref(activeFilter, activeSort, typeOption.key, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -175,7 +201,7 @@ export default async function Home({
             return (
               <Link
                 key={sortOption.key}
-                href={buildHref(activeFilter, sortOption.key, activeType)}
+                href={buildHref(activeFilter, sortOption.key, activeType, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -199,6 +225,59 @@ export default async function Home({
               <WatchlistCard key={item.id} item={item} />
             ))}
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav
+            aria-label="Навигация по страницам"
+            className="flex items-center gap-4"
+          >
+            {currentPage > 1 ? (
+              <Link
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  activeType,
+                  currentPage - 1,
+                )}
+                className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Назад
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="cursor-not-allowed rounded-full px-3 py-1 text-sm font-medium text-zinc-400 dark:text-zinc-600"
+              >
+                Назад
+              </span>
+            )}
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Страница {currentPage} из {totalPages}
+            </p>
+
+            {currentPage < totalPages ? (
+              <Link
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  activeType,
+                  currentPage + 1,
+                )}
+                className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Далее
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="cursor-not-allowed rounded-full px-3 py-1 text-sm font-medium text-zinc-400 dark:text-zinc-600"
+              >
+                Далее
+              </span>
+            )}
+          </nav>
         )}
       </main>
     </div>
