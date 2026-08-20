@@ -85,6 +85,7 @@ export default async function Home({
     targetSort: "newest" | "oldest",
     targetType: "all" | "movie" | "tv",
     targetPage: number,
+    targetQuery: string,
   ) => {
     const params = new URLSearchParams();
 
@@ -102,6 +103,10 @@ export default async function Home({
 
     if (targetPage > 1) {
       params.set("page", String(targetPage));
+    }
+
+    if (targetQuery !== "") {
+      params.set("q", targetQuery);
     }
 
     const query = params.toString();
@@ -166,7 +171,13 @@ export default async function Home({
             return (
               <Link
                 key={filter.key}
-                href={buildHref(filter.key, activeSort, activeType, 1)}
+                href={buildHref(
+                  filter.key,
+                  activeSort,
+                  activeType,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -187,7 +198,13 @@ export default async function Home({
             return (
               <Link
                 key={typeOption.key}
-                href={buildHref(activeFilter, activeSort, typeOption.key, 1)}
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  typeOption.key,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -208,7 +225,13 @@ export default async function Home({
             return (
               <Link
                 key={sortOption.key}
-                href={buildHref(activeFilter, sortOption.key, activeType, 1)}
+                href={buildHref(
+                  activeFilter,
+                  sortOption.key,
+                  activeType,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -246,6 +269,7 @@ export default async function Home({
                   activeSort,
                   activeType,
                   currentPage - 1,
+                  searchQuery,
                 )}
                 className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
@@ -271,6 +295,7 @@ export default async function Home({
                   activeSort,
                   activeType,
                   currentPage + 1,
+                  searchQuery,
                 )}
                 className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
