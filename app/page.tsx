@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Form from "next/form";
 import Link from "next/link";
 import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 
@@ -163,6 +164,60 @@ export default async function Home({
         </div>
 
         <MovieSearch />
+
+        <Form
+          action="/"
+          aria-label="Поиск в моём списке"
+          className="flex w-full max-w-sm flex-col gap-1"
+        >
+          <label
+            htmlFor="watchlist-search-input"
+            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Поиск в моём списке
+          </label>
+
+          <div className="flex gap-2">
+            <input
+              key={searchQuery}
+              id="watchlist-search-input"
+              type="search"
+              name="q"
+              defaultValue={searchQuery}
+              maxLength={100}
+              placeholder="Название фильма или сериала"
+              className="w-full rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50"
+            />
+
+            {activeFilter !== "all" && (
+              <input type="hidden" name="status" value={activeFilter} />
+            )}
+
+            {activeType !== "all" && (
+              <input type="hidden" name="type" value={activeType} />
+            )}
+
+            {activeSort !== "newest" && (
+              <input type="hidden" name="sort" value={activeSort} />
+            )}
+
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-black px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+            >
+              Найти
+            </button>
+
+            {searchQuery !== "" && (
+              <Link
+                href={buildHref(activeFilter, activeSort, activeType, 1, "")}
+                className="shrink-0 rounded-full px-3 py-1 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Сбросить
+              </Link>
+            )}
+          </div>
+        </Form>
 
         <nav aria-label="Фильтр списка" className="flex gap-2">
           {filters.map((filter) => {
