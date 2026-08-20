@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -21,7 +21,7 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status } = await searchParams;
+  const { status, sort } = await searchParams;
 
   const conditions = [eq(watchlistItem.userId, session.user.id)];
 
@@ -31,11 +31,13 @@ export default async function Home({
     conditions.push(eq(watchlistItem.watched, true));
   }
 
+  const sortOrder = sort === "oldest" ? asc : desc;
+
   const items = await db
     .select()
     .from(watchlistItem)
     .where(and(...conditions))
-    .orderBy(desc(watchlistItem.createdAt));
+    .orderBy(sortOrder(watchlistItem.createdAt));
 
   const activeFilter =
     status === "unwatched" || status === "watched" ? status : "all";
