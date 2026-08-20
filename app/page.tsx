@@ -46,6 +46,12 @@ export default async function Home({
     { key: "watched", label: "Просмотрено", href: "/?status=watched" },
   ] as const;
 
+  const emptyStateText = {
+    all: "Ваш список пока пуст",
+    unwatched: "Нет непросмотренных фильмов и сериалов",
+    watched: "Нет просмотренных фильмов и сериалов",
+  }[activeFilter];
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex w-full max-w-3xl flex-col items-center gap-8 py-16 px-6">
@@ -84,7 +90,7 @@ export default async function Home({
 
         {items.length === 0 ? (
           <p className="text-zinc-600 dark:text-zinc-400">
-            Ваш список пока пуст
+            {emptyStateText}
           </p>
         ) : (
           <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-center">
