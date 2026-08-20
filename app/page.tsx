@@ -94,10 +94,22 @@ export default async function Home({
   ] as const;
 
   const emptyStateText = {
-    all: "Ваш список пока пуст",
-    unwatched: "Нет непросмотренных фильмов и сериалов",
-    watched: "Нет просмотренных фильмов и сериалов",
-  }[activeFilter];
+    all: {
+      all: "Ваш список пока пуст",
+      unwatched: "Нет непросмотренных фильмов и сериалов",
+      watched: "Нет просмотренных фильмов и сериалов",
+    },
+    movie: {
+      all: "В списке пока нет фильмов",
+      unwatched: "Нет непросмотренных фильмов",
+      watched: "Нет просмотренных фильмов",
+    },
+    tv: {
+      all: "В списке пока нет сериалов",
+      unwatched: "Нет непросмотренных сериалов",
+      watched: "Нет просмотренных сериалов",
+    },
+  }[activeType][activeFilter];
 
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
