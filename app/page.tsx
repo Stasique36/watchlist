@@ -132,23 +132,26 @@ export default async function Home({
     { key: "tv", label: "Сериалы" },
   ] as const;
 
-  const emptyStateText = {
-    all: {
-      all: "Ваш список пока пуст",
-      unwatched: "Нет непросмотренных фильмов и сериалов",
-      watched: "Нет просмотренных фильмов и сериалов",
-    },
-    movie: {
-      all: "В списке пока нет фильмов",
-      unwatched: "Нет непросмотренных фильмов",
-      watched: "Нет просмотренных фильмов",
-    },
-    tv: {
-      all: "В списке пока нет сериалов",
-      unwatched: "Нет непросмотренных сериалов",
-      watched: "Нет просмотренных сериалов",
-    },
-  }[activeType][activeFilter];
+  const emptyStateText =
+    searchQuery !== ""
+      ? "По вашему запросу ничего не найдено"
+      : {
+          all: {
+            all: "Ваш список пока пуст",
+            unwatched: "Нет непросмотренных фильмов и сериалов",
+            watched: "Нет просмотренных фильмов и сериалов",
+          },
+          movie: {
+            all: "В списке пока нет фильмов",
+            unwatched: "Нет непросмотренных фильмов",
+            watched: "Нет просмотренных фильмов",
+          },
+          tv: {
+            all: "В списке пока нет сериалов",
+            unwatched: "Нет непросмотренных сериалов",
+            watched: "Нет просмотренных сериалов",
+          },
+        }[activeType][activeFilter];
 
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
