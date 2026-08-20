@@ -77,6 +77,7 @@ export default async function Home({
     targetStatus: "all" | "unwatched" | "watched",
     targetSort: "newest" | "oldest",
     targetType: "all" | "movie" | "tv",
+    targetPage: number,
   ) => {
     const params = new URLSearchParams();
 
@@ -90,6 +91,10 @@ export default async function Home({
 
     if (targetType !== "all") {
       params.set("type", targetType);
+    }
+
+    if (targetPage > 1) {
+      params.set("page", String(targetPage));
     }
 
     const query = params.toString();
@@ -154,7 +159,7 @@ export default async function Home({
             return (
               <Link
                 key={filter.key}
-                href={buildHref(filter.key, activeSort, activeType)}
+                href={buildHref(filter.key, activeSort, activeType, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -175,7 +180,7 @@ export default async function Home({
             return (
               <Link
                 key={typeOption.key}
-                href={buildHref(activeFilter, activeSort, typeOption.key)}
+                href={buildHref(activeFilter, activeSort, typeOption.key, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -196,7 +201,7 @@ export default async function Home({
             return (
               <Link
                 key={sortOption.key}
-                href={buildHref(activeFilter, sortOption.key, activeType)}
+                href={buildHref(activeFilter, sortOption.key, activeType, 1)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -220,6 +225,59 @@ export default async function Home({
               <WatchlistCard key={item.id} item={item} />
             ))}
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav
+            aria-label="Навигация по страницам"
+            className="flex items-center gap-4"
+          >
+            {currentPage > 1 ? (
+              <Link
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  activeType,
+                  currentPage - 1,
+                )}
+                className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Назад
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="cursor-not-allowed rounded-full px-3 py-1 text-sm font-medium text-zinc-400 dark:text-zinc-600"
+              >
+                Назад
+              </span>
+            )}
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Страница {currentPage} из {totalPages}
+            </p>
+
+            {currentPage < totalPages ? (
+              <Link
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  activeType,
+                  currentPage + 1,
+                )}
+                className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Далее
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="cursor-not-allowed rounded-full px-3 py-1 text-sm font-medium text-zinc-400 dark:text-zinc-600"
+              >
+                Далее
+              </span>
+            )}
+          </nav>
         )}
       </main>
     </div>
