@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -25,7 +25,7 @@ export default async function Home({
 
   const { status, sort, type, page } = await searchParams;
 
-  const currentPage =
+  const requestedPage =
     typeof page === "string" &&
     /^\d+$/.test(page) &&
     Number.isSafeInteger(Number(page)) &&
@@ -46,6 +46,15 @@ export default async function Home({
   } else if (type === "tv") {
     conditions.push(eq(watchlistItem.mediaType, "tv"));
   }
+
+  const [{ value: totalItems }] = await db
+    .select({ value: count() })
+    .from(watchlistItem)
+    .where(and(...conditions));
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+  const currentPage = Math.min(requestedPage, totalPages);
 
   const sortOrder = sort === "oldest" ? asc : desc;
 
