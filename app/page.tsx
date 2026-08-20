@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { and, asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -23,7 +23,9 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status, sort, type, page } = await searchParams;
+  const { status, sort, type, page, q } = await searchParams;
+
+  const searchQuery = typeof q === "string" ? q.trim().slice(0, 100) : "";
 
   const requestedPage =
     typeof page === "string" &&
@@ -45,6 +47,11 @@ export default async function Home({
     conditions.push(eq(watchlistItem.mediaType, "movie"));
   } else if (type === "tv") {
     conditions.push(eq(watchlistItem.mediaType, "tv"));
+  }
+
+  if (searchQuery) {
+    const escapedQuery = searchQuery.replace(/[\\%_]/g, (char) => `\\${char}`);
+    conditions.push(ilike(watchlistItem.title, `%${escapedQuery}%`));
   }
 
   const [{ value: totalItems }] = await db
