@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
@@ -36,6 +37,15 @@ export default async function Home({
     .where(and(...conditions))
     .orderBy(desc(watchlistItem.createdAt));
 
+  const activeFilter =
+    status === "unwatched" || status === "watched" ? status : "all";
+
+  const filters = [
+    { key: "all", label: "Все", href: "/" },
+    { key: "unwatched", label: "Не просмотрено", href: "/?status=unwatched" },
+    { key: "watched", label: "Просмотрено", href: "/?status=watched" },
+  ] as const;
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex w-full max-w-3xl flex-col items-center gap-8 py-16 px-6">
@@ -50,6 +60,27 @@ export default async function Home({
         </div>
 
         <MovieSearch />
+
+        <nav aria-label="Фильтр списка" className="flex gap-2">
+          {filters.map((filter) => {
+            const isActive = filter.key === activeFilter;
+
+            return (
+              <Link
+                key={filter.key}
+                href={filter.href}
+                aria-current={isActive ? "page" : undefined}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                    : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                }`}
+              >
+                {filter.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         {items.length === 0 ? (
           <p className="text-zinc-600 dark:text-zinc-400">
