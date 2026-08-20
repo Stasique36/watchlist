@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -9,17 +9,31 @@ import { LogoutButton } from "@/components/logout-button";
 import { MovieSearch } from "@/components/movie-search";
 import { WatchlistCard } from "@/components/watchlist-card";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
     redirect("/login");
   }
 
+  const { status } = await searchParams;
+
+  const conditions = [eq(watchlistItem.userId, session.user.id)];
+
+  if (status === "unwatched") {
+    conditions.push(eq(watchlistItem.watched, false));
+  } else if (status === "watched") {
+    conditions.push(eq(watchlistItem.watched, true));
+  }
+
   const items = await db
     .select()
     .from(watchlistItem)
-    .where(eq(watchlistItem.userId, session.user.id))
+    .where(and(...conditions))
     .orderBy(desc(watchlistItem.createdAt));
 
   return (
