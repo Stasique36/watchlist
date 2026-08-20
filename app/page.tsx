@@ -50,9 +50,12 @@ export default async function Home({
 
   const activeSort = sort === "oldest" ? "oldest" : "newest";
 
+  const activeType = type === "movie" || type === "tv" ? type : "all";
+
   const buildHref = (
     targetStatus: "all" | "unwatched" | "watched",
     targetSort: "newest" | "oldest",
+    targetType: "all" | "movie" | "tv",
   ) => {
     const params = new URLSearchParams();
 
@@ -62,6 +65,10 @@ export default async function Home({
 
     if (targetSort !== "newest") {
       params.set("sort", targetSort);
+    }
+
+    if (targetType !== "all") {
+      params.set("type", targetType);
     }
 
     const query = params.toString();
@@ -78,6 +85,12 @@ export default async function Home({
   const sorts = [
     { key: "newest", label: "Сначала новые" },
     { key: "oldest", label: "Сначала старые" },
+  ] as const;
+
+  const types = [
+    { key: "all", label: "Все типы" },
+    { key: "movie", label: "Фильмы" },
+    { key: "tv", label: "Сериалы" },
   ] as const;
 
   const emptyStateText = {
@@ -108,7 +121,7 @@ export default async function Home({
             return (
               <Link
                 key={filter.key}
-                href={buildHref(filter.key, activeSort)}
+                href={buildHref(filter.key, activeSort, activeType)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -122,6 +135,27 @@ export default async function Home({
           })}
         </nav>
 
+        <nav aria-label="Тип контента" className="flex gap-2">
+          {types.map((typeOption) => {
+            const isActive = typeOption.key === activeType;
+
+            return (
+              <Link
+                key={typeOption.key}
+                href={buildHref(activeFilter, activeSort, typeOption.key)}
+                aria-current={isActive ? "page" : undefined}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                    : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                }`}
+              >
+                {typeOption.label}
+              </Link>
+            );
+          })}
+        </nav>
+
         <nav aria-label="Сортировка списка" className="flex gap-2">
           {sorts.map((sortOption) => {
             const isActive = sortOption.key === activeSort;
@@ -129,7 +163,7 @@ export default async function Home({
             return (
               <Link
                 key={sortOption.key}
-                href={buildHref(activeFilter, sortOption.key)}
+                href={buildHref(activeFilter, sortOption.key, activeType)}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
