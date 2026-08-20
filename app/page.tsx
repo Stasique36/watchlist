@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Form from "next/form";
 import Link from "next/link";
-import { and, asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 
 import { db } from "@/db";
 import { watchlistItem } from "@/db/schema/watchlist";
@@ -23,7 +24,9 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status, sort, type, page } = await searchParams;
+  const { status, sort, type, page, q } = await searchParams;
+
+  const searchQuery = typeof q === "string" ? q.trim().slice(0, 100) : "";
 
   const requestedPage =
     typeof page === "string" &&
@@ -45,6 +48,11 @@ export default async function Home({
     conditions.push(eq(watchlistItem.mediaType, "movie"));
   } else if (type === "tv") {
     conditions.push(eq(watchlistItem.mediaType, "tv"));
+  }
+
+  if (searchQuery) {
+    const escapedQuery = searchQuery.replace(/[\\%_]/g, (char) => `\\${char}`);
+    conditions.push(ilike(watchlistItem.title, `%${escapedQuery}%`));
   }
 
   const [{ value: totalItems }] = await db
@@ -78,6 +86,7 @@ export default async function Home({
     targetSort: "newest" | "oldest",
     targetType: "all" | "movie" | "tv",
     targetPage: number,
+    targetQuery: string,
   ) => {
     const params = new URLSearchParams();
 
@@ -95,6 +104,10 @@ export default async function Home({
 
     if (targetPage > 1) {
       params.set("page", String(targetPage));
+    }
+
+    if (targetQuery !== "") {
+      params.set("q", targetQuery);
     }
 
     const query = params.toString();
@@ -119,23 +132,26 @@ export default async function Home({
     { key: "tv", label: "Сериалы" },
   ] as const;
 
-  const emptyStateText = {
-    all: {
-      all: "Ваш список пока пуст",
-      unwatched: "Нет непросмотренных фильмов и сериалов",
-      watched: "Нет просмотренных фильмов и сериалов",
-    },
-    movie: {
-      all: "В списке пока нет фильмов",
-      unwatched: "Нет непросмотренных фильмов",
-      watched: "Нет просмотренных фильмов",
-    },
-    tv: {
-      all: "В списке пока нет сериалов",
-      unwatched: "Нет непросмотренных сериалов",
-      watched: "Нет просмотренных сериалов",
-    },
-  }[activeType][activeFilter];
+  const emptyStateText =
+    searchQuery !== ""
+      ? "По вашему запросу ничего не найдено"
+      : {
+          all: {
+            all: "Ваш список пока пуст",
+            unwatched: "Нет непросмотренных фильмов и сериалов",
+            watched: "Нет просмотренных фильмов и сериалов",
+          },
+          movie: {
+            all: "В списке пока нет фильмов",
+            unwatched: "Нет непросмотренных фильмов",
+            watched: "Нет просмотренных фильмов",
+          },
+          tv: {
+            all: "В списке пока нет сериалов",
+            unwatched: "Нет непросмотренных сериалов",
+            watched: "Нет просмотренных сериалов",
+          },
+        }[activeType][activeFilter];
 
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
@@ -152,6 +168,60 @@ export default async function Home({
 
         <MovieSearch />
 
+        <Form
+          action="/"
+          aria-label="Поиск в моём списке"
+          className="flex w-full max-w-sm flex-col gap-1"
+        >
+          <label
+            htmlFor="watchlist-search-input"
+            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Поиск в моём списке
+          </label>
+
+          <div className="flex gap-2">
+            <input
+              key={searchQuery}
+              id="watchlist-search-input"
+              type="search"
+              name="q"
+              defaultValue={searchQuery}
+              maxLength={100}
+              placeholder="Название фильма или сериала"
+              className="w-full rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-50"
+            />
+
+            {activeFilter !== "all" && (
+              <input type="hidden" name="status" value={activeFilter} />
+            )}
+
+            {activeType !== "all" && (
+              <input type="hidden" name="type" value={activeType} />
+            )}
+
+            {activeSort !== "newest" && (
+              <input type="hidden" name="sort" value={activeSort} />
+            )}
+
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-black px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+            >
+              Найти
+            </button>
+
+            {searchQuery !== "" && (
+              <Link
+                href={buildHref(activeFilter, activeSort, activeType, 1, "")}
+                className="shrink-0 rounded-full px-3 py-1 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                Сбросить
+              </Link>
+            )}
+          </div>
+        </Form>
+
         <nav aria-label="Фильтр списка" className="flex gap-2">
           {filters.map((filter) => {
             const isActive = filter.key === activeFilter;
@@ -159,7 +229,13 @@ export default async function Home({
             return (
               <Link
                 key={filter.key}
-                href={buildHref(filter.key, activeSort, activeType, 1)}
+                href={buildHref(
+                  filter.key,
+                  activeSort,
+                  activeType,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -180,7 +256,13 @@ export default async function Home({
             return (
               <Link
                 key={typeOption.key}
-                href={buildHref(activeFilter, activeSort, typeOption.key, 1)}
+                href={buildHref(
+                  activeFilter,
+                  activeSort,
+                  typeOption.key,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -201,7 +283,13 @@ export default async function Home({
             return (
               <Link
                 key={sortOption.key}
-                href={buildHref(activeFilter, sortOption.key, activeType, 1)}
+                href={buildHref(
+                  activeFilter,
+                  sortOption.key,
+                  activeType,
+                  1,
+                  searchQuery,
+                )}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
@@ -239,6 +327,7 @@ export default async function Home({
                   activeSort,
                   activeType,
                   currentPage - 1,
+                  searchQuery,
                 )}
                 className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
@@ -264,6 +353,7 @@ export default async function Home({
                   activeSort,
                   activeType,
                   currentPage + 1,
+                  searchQuery,
                 )}
                 className="rounded-full bg-zinc-200 px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
