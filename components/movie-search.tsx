@@ -117,13 +117,23 @@ export function MovieSearch() {
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
-      <input
-        type="text"
-        value={query}
-        onChange={handleQueryChange}
-        placeholder="Поиск..."
-        className="w-full rounded-full border border-black/[.08] bg-white px-5 py-3 text-black outline-none dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50"
-      />
+      <div className="flex w-full flex-col gap-1">
+        <label
+          htmlFor="tmdb-search-input"
+          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
+          Поиск в TMDB
+        </label>
+
+        <input
+          id="tmdb-search-input"
+          type="text"
+          value={query}
+          onChange={handleQueryChange}
+          placeholder="Название фильма или сериала"
+          className="w-full rounded-full border border-black/[.08] bg-white px-5 py-3 text-black outline-none dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50"
+        />
+      </div>
 
       {loading && (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Поиск...</p>
