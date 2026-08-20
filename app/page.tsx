@@ -10,6 +10,8 @@ import { LogoutButton } from "@/components/logout-button";
 import { MovieSearch } from "@/components/movie-search";
 import { WatchlistCard } from "@/components/watchlist-card";
 
+const PAGE_SIZE = 10;
+
 export default async function Home({
   searchParams,
 }: {
@@ -21,7 +23,15 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status, sort, type } = await searchParams;
+  const { status, sort, type, page } = await searchParams;
+
+  const currentPage =
+    typeof page === "string" &&
+    /^\d+$/.test(page) &&
+    Number.isSafeInteger(Number(page)) &&
+    Number(page) >= 1
+      ? Number(page)
+      : 1;
 
   const conditions = [eq(watchlistItem.userId, session.user.id)];
 
@@ -43,7 +53,9 @@ export default async function Home({
     .select()
     .from(watchlistItem)
     .where(and(...conditions))
-    .orderBy(sortOrder(watchlistItem.createdAt));
+    .orderBy(sortOrder(watchlistItem.createdAt), asc(watchlistItem.id))
+    .limit(PAGE_SIZE)
+    .offset((currentPage - 1) * PAGE_SIZE);
 
   const activeFilter =
     status === "unwatched" || status === "watched" ? status : "all";
