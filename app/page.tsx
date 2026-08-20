@@ -21,7 +21,7 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { status, sort } = await searchParams;
+  const { status, sort, type } = await searchParams;
 
   const conditions = [eq(watchlistItem.userId, session.user.id)];
 
@@ -29,6 +29,12 @@ export default async function Home({
     conditions.push(eq(watchlistItem.watched, false));
   } else if (status === "watched") {
     conditions.push(eq(watchlistItem.watched, true));
+  }
+
+  if (type === "movie") {
+    conditions.push(eq(watchlistItem.mediaType, "movie"));
+  } else if (type === "tv") {
+    conditions.push(eq(watchlistItem.mediaType, "tv"));
   }
 
   const sortOrder = sort === "oldest" ? asc : desc;
